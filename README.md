@@ -1,66 +1,51 @@
-# OpenTicket
+# OpenTicket CMS v0.2.0 alpha
 
-An MIT-licensed event ticketing starter. Discover events, reserve free tickets, create events, export attendees, and check guests in.
+Download, upload, install in your browser. An MIT-licensed PHP/MySQL event ticketing CMS for Apache/cPanel or Ubuntu with PHP-FPM and Nginx.
 
-**Status: v0.1 alpha.** Not yet a production paid-ticket platform.
+## Install from the upload-ready ZIP
 
-## Working features
+1. Enable HTTPS for your domain. Use PHP **8.2+** with **PDO MySQL**, and MySQL **8.0+** or MariaDB **10.6+**.
+2. Upload and extract `OpenTicket-CMS-v0.2.0.zip` into the website folder. `index.php` must be in the domain's document root (or your chosen subfolder). This release has no Composer, Node, or terminal requirement for application installation.
+3. Create an empty database and database user in your hosting panel. Grant that user privileges on that database, including CREATE/ALTER/INDEX and normal read/write privileges.
+4. Make `storage/` writable by PHP. Prefer owner/group permissions (typically 0750/0770); do not make it world-writable.
+5. Visit your domain. The wizard checks hosting requirements and generates `storage/install-key.php`.
+6. Open that file in your hosting file manager and copy the value between the quotes into the wizard. This proves control of the uploaded files before creating an administrator.
+7. Enter website name, timezone, database details, and administrator name/email/password. Click **Install OpenTicket**.
+8. You are signed in to Admin studio. Create and publish an event. The installer disables itself once `storage/config.php` exists and removes the installation key.
 
-- Responsive event discovery, filters, search, and shareable event links
-- Free ticket reservations (1–6 tickets per booking), persistent D1 storage
-- Capacity enforced in one conditional SQL insert, avoiding overselling
-- My tickets with printable booking codes and pre-admission cancellation
-- Organizer event creation, attendee totals, safe CSV export
-- Organizer-only admission with atomic duplicate check-in prevention
-- Server-side validation, same-origin write checks, owner-scoped records
+Only `storage/` needs to remain writable. Keep `storage/config.php` private (0600, readable by the PHP process). Back up the database **and** this file. Do not delete configuration to reinstall an existing database.
 
-Sample events are fictional fixtures to exercise the flow. They are not real gatherings.
-Check-in uses booking codes; QR scanning and ticket emails are not implemented.
+The application has no sample events or sample administrator. Public users can register attendee accounts; only the administrator can manage events and admission.
 
-## Stack
+## Included
 
-TypeScript, React, Vinext (Next-compatible APIs), Cloudflare Workers, D1 SQLite, Drizzle migrations. This first implementation targets Cloudflare, rather than PostgreSQL. Database access is isolated under `lib/server.ts` and `db/` for future adapters.
+- Browser installation wizard and requirement checks
+- Native admin and attendee accounts; hashed passwords; password change
+- Event create/edit/draft/publish/archive
+- Homepage search and category filters, website name and introduction settings
+- Site timezone, stored UTC event dates
+- Free ticket booking, printable booking codes, My tickets, cancellation
+- Capacity locking with InnoDB transactions, organizer check-in once per booking
+- Attendee search and CSV export
+- CSRF tokens, escaped content, prepared SQL, session rotation, login/signup throttling
 
-## Local setup
+## Alpha limitations
 
-Requires Node >=22.13, Git, and pnpm. The project contains a lockfile.
+Free admission only. No Stripe, tax/fees, ticket types, email delivery, forgot-password emails, QR scanner, uploads, plugins, themes, automatic upgrades, or organization/staff roles yet. All people in a booking are admitted together. This is an installable first CMS release, not feature parity with WordPress or a completed paid-ticket system.
 
-```sh
-pnpm install --frozen-lockfile
-pnpm run build
-node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0000_curved_speedball.sql
-pnpm run dev
-```
+## Ubuntu hosting
 
-The standalone portable profile defaults automatically. Visit the URL printed by the dev server. Loopback-only development sign-in is available at `/signin-with-chatgpt?return_to=/` in portable mode. This is a local test identity, not production authentication.
+Use `docs/UBUNTU.md` for server package installation and Nginx setup. Application users with an existing PHP/MySQL host can use only the browser wizard above.
 
-The private hosted preview uses dispatch-owned ChatGPT sign-in. For independent Cloudflare hosting, implement a production authentication adapter before exposing writes. **Never trust incoming `oai-authenticated-user-*` headers on an unprotected independent deployment.** Current authentication is valid only behind the Sites dispatch that strips/injects identity headers. The auth adapter is `app/chatgpt-auth.ts`. Standard organizer/customer signup and roles are roadmap items.
+## Releases and development
 
-Date/time inputs use the creator's browser timezone. Explicit per-event timezone support is a roadmap item.
+The upload-ready ZIP contains application files and install instructions only. GitHub's source ZIP also includes CI and tests; preferably use the packaged application ZIP.
 
-## Verify
+Run `python3 scripts/package.py` to generate the upload-ready ZIP. CI packages it as an Actions artifact named **OpenTicket-CMS-install** after PHP lint and real MariaDB/HTTP integration tests pass.
 
-```sh
-pnpm exec tsc --noEmit
-python3 tests/test_booking.py
-pnpm run build
-```
+For local development, PHP's built-in server and a disposable MySQL database can run the wizard on localhost. Never expose the PHP development server publicly.
 
-The SQLite tests cover the reservation SQL, quantity release on cancellation, owner restrictions, concurrent capacity enforcement, and duplicate admission. Browser QA has not been run for this release.
+The previous Cloudflare/TypeScript implementation remains in Git history (commit `43491c9`). This CMS replaces it as the main installation path. No automatic migration from the hosted preview is included. Existing preview data remains separate.
 
-## GitHub release
-
-Create an empty **public** repository named `open-ticket` in your GitHub account, unzip this source, then:
-
-```sh
-git init
-git add .
-git commit -m "Start OpenTicket v0.1"
-git branch -M main
-git remote add origin https://github.com/YOUR-USERNAME/open-ticket.git
-git push -u origin main
-```
-
-The downloadable source excludes hosted project identity, Git history, runtime data, and dependencies. `.openai/hosting.json` in the package declares `DB` without a hosted project ID. Do not copy another deployment's database or credentials.
-
-See [CONTRIBUTING.md](CONTRIBUTING.md), [docs/ROADMAP.md](docs/ROADMAP.md), and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+## License
+MIT. See LICENSE. Contributions should include steps to reproduce changes and meaningful validation. See CONTRIBUTING.md.

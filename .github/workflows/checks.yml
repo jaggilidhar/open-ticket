@@ -1,16 +1,43 @@
-name: Checks
+name: CMS checks
 on: [push, pull_request]
+permissions:
+  contents: read
 jobs:
   verify:
     runs-on: ubuntu-latest
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MARIADB_ROOT_PASSWORD: testpass
+          MARIADB_DATABASE: openticket_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: shivammathur/setup-php@v2
         with:
-          node-version: 22
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm exec tsc --noEmit
-      - run: python3 tests/test_booking.py
-      - run: pnpm run build
+          php-version: '8.2'
+          extensions: pdo_mysql
+          coverage: none
+      - name: PHP syntax checks
+        run: find . -name '*.php' -not -path './storage/*' -print0 | xargs -0 -n1 php -l
+      - name: Installation and booking integration tests
+        run: |
+          php -S localhost:8080 tests/router.php > /tmp/openticket-test.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://localhost:8080/ > /dev/null; then break; fi
+            sleep 1
+          done
+          python3 tests/integration.py
+      - name: Package upload-ready application
+        run: python3 scripts/package.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: OpenTicket-CMS-install
+          path: dist/OpenTicket-CMS-v0.2.0.zip

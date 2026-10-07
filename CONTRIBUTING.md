@@ -1,7 +1,5 @@
 # Contributing
 
-Open an issue describing the problem or feature before large changes. Fork the repository, create a feature branch, and submit a pull request with the behavior change and validation results.
+Use PHP 8.2+, InnoDB MySQL/MariaDB, and no required Composer/runtime build step for release installation. Preserve the installer lock and protect configuration files. All state-changing requests must verify CSRF and authorization. Keep event inventory transactions serialized through the event-row lock. Never overwrite an installed site's config or database in a release package.
 
-Keep ownership checks server-side. Validate untrusted input, keep secrets out of source, and preserve the atomic reservation and check-in semantics. Add migrations instead of editing migrations already applied to a deployed database.
-
-Run TypeScript checks, the SQL tests, and a build before submitting. Explain any checks you could not run. Contributions are under the MIT license.
+Run PHP lint, tests/integration.py against a disposable database, and scripts/package.py before submitting a pull request. Review the generated ZIP to ensure no live storage files or credentials are included. Contributions are under the MIT license.

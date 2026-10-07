@@ -1,0 +1,5 @@
+Options -Indexes
+DirectoryIndex index.php
+<FilesMatch "^(?:\.env.*|.*\.(?:sql|md|yml|yaml|lock)|LICENSE)$">
+  Require all denied
+</FilesMatch>
