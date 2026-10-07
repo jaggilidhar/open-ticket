@@ -8,7 +8,7 @@ class Client:
   return self.opener.open(base+'index.php?'+urllib.parse.urlencode({'page':page,**params})).read().decode()
  def post(self,page,action=None,**params):
   pagehtml=self.get('tickets' if page=='event' else page);token=re.search(r'name="csrf" value="([a-f0-9]+)"',pagehtml).group(1)
-  return self.opener.open(base+'index.php?page='+page,urllib.parse.urlencode({'csrf':token,**({'action':action} if action else {}),**params}).encode()).read().decode()
+  return self.opener.open(base+'index.php?page='+page+('&id='+str(params['event_id']) if page=='event' else ''),urllib.parse.urlencode({'csrf':token,**({'action':action} if action else {}),**params}).encode()).read().decode()
  def blocked(self,path,code):
   try:self.opener.open(base+path)
   except urllib.error.HTTPError as e:assert e.code==code;return
